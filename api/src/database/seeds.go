@@ -1,6 +1,8 @@
 package database
 
-import "github.com/HlapovErop/MarkBot/internal/models"
+import (
+	"github.com/HlapovErop/MarkBot/src/internal/models"
+)
 
 func seeds() {
 	users := []models.User{

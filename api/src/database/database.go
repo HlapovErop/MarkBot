@@ -2,7 +2,7 @@ package database
 
 import (
 	"fmt"
-	"github.com/HlapovErop/MarkBot/internal/models"
+	"github.com/HlapovErop/MarkBot/src/internal/models"
 	"log"
 	"os"
 

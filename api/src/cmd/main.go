@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/HlapovErop/MarkBot/database"
+	"github.com/HlapovErop/MarkBot/src/database"
 	"github.com/gofiber/fiber/v2"
 )
 
