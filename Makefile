@@ -1,7 +1,7 @@
 NAME=MARKBOT
 
 clean:
-	rm -rf tmp/
+	rm -rf api/tmp/
 
 api-console:
 	docker compose run --service-ports api-markbot bash
