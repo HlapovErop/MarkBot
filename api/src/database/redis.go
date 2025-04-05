@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-redis/redis/v8"
 	"log"
 	"os"
@@ -19,7 +20,7 @@ var Redis RedisInstance
 
 func ConnectRedis() {
 	client := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr: fmt.Sprintf("%s:6379", os.Getenv("REDIS_HOST")),
 	})
 
 	err := client.Ping(context.Background()).Err() // пингуем Redis для проверки подключения. Если не подключено, то выйдет ошибка
