@@ -3,6 +3,9 @@ NAME=MARKBOT
 clean:
 	rm -rf tmp/
 
+api-console:
+	docker compose run --service-ports api-markbot bash
+
 greeting:
 	@echo "🎓🎓🎓"
 	@echo

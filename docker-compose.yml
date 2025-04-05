@@ -14,8 +14,19 @@ services:
     image: postgres:alpine # фактически эта та же штучка, что и FROM в Dockerfile, но тк на не нужны никакие доп действия, целый Dockerfile создавать нет смысла (вареное яйцо)
     ports:
       - "5432:5432"
+    environment: # Возьмет из .env. Куда и что с ними делать - сам разберется
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
     volumes:
       - postgres-db-markbot:/var/lib/postgresql/data # тут уже используется именованный том. postgres-db-markbot - это имя тома, а /var/lib/postgresql/data - путь внутри контейнера (кто не знал, данные БД хранятся в файликах, где ж еще SQLite на максималках)
+  redis:
+    image: redis:latest
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-db-markbot:/data
 
 volumes: # А вот тут регистрируем наш именной том. Он тоже хранится, но где - за это отвечает сам докер, например в /var/lib/docker/volumes. Именованные тома можно синхронизировать сразу между несколькими проектами и контейнерами, если хост один и тот же. Напрмер при подключении другого проекта можете указать postgres-db-markbot, и он будет видеть бд этого проекта
   postgres-db-markbot:
+  redis-db-markbot:
