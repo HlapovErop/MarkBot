@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 	"slices"
 )
@@ -18,11 +19,11 @@ type InterfaceUser interface {
 
 type User struct {
 	gorm.Model
-	Name     string  `json:"name" gorm:"type:varchar(255);not null;default:null"`
-	Email    string  `json:"email" gorm:"type:varchar(255);not null;default:null"`
-	Password string  `json:"password" gorm:"type:varchar(255);not null;default:null"`
-	Points   int64   `json:"points" gorm:"type:int;not null;default:100"`
-	Roles    []int64 `json:"roles" gorm:"type:integer[];not null;"`
+	Name     string        `json:"name" gorm:"type:varchar(255);not null;default:null"`
+	Email    string        `json:"email" gorm:"type:varchar(255);not null;default:null"`
+	Password string        `json:"password" gorm:"type:varchar(255);not null;default:null"`
+	Points   int64         `json:"points" gorm:"type:int;not null;default:100"`
+	Roles    pq.Int64Array `json:"roles" gorm:"type:integer[];not null;"`
 }
 
 func (u *User) GetRoles() []int64 {
@@ -34,7 +35,6 @@ func (u *User) GetID() uint {
 }
 
 func IsTeacher(user InterfaceUser) bool {
-
 	return slices.Contains(user.GetRoles(), RoleTeacher)
 }
 
