@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"github.com/HlapovErop/MarkBot/src/internal/utils"
+	"github.com/HlapovErop/MarkBot/src/internal/utils/logger"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -22,7 +22,7 @@ func LoggingMiddleware(ctx *fiber.Ctx) error {
 	status := ctx.Response().StatusCode()
 
 	// Логирование информации о запросе
-	utils.GetLogger().Log(utils.RequestLevel, "Request", // Эта запись про запрос, на нее выделил отдельный уровень логирования, чтобы можно было легко их отследить, такое тоже может быть важно при выносе метрик
+	logger.GetLogger().Log(logger.RequestLevel, "Request", // Эта запись про запрос, на нее выделил отдельный уровень логирования, чтобы можно было легко их отследить, такое тоже может быть важно при выносе метрик
 		zap.String("method", ctx.Method()),
 		zap.String("path", ctx.Path()),
 		zap.Int("status", status),

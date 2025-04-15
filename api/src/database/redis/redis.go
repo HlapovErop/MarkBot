@@ -3,7 +3,7 @@ package redis
 import (
 	"context"
 	"fmt"
-	"github.com/HlapovErop/MarkBot/src/internal/utils"
+	"github.com/HlapovErop/MarkBot/src/internal/utils/logger"
 	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
 	"os"
@@ -25,10 +25,10 @@ func connectRedis() {
 
 	err := client.Ping(context.Background()).Err() // пингуем Redis для проверки подключения. Если не подключено, то выйдет ошибка
 	if err != nil {
-		utils.GetLogger().Fatal("Failed to connect to database. \n", zap.Error(err))
+		logger.GetLogger().Fatal("Failed to connect to database. \n", zap.Error(err))
 	}
 
-	utils.GetLogger().Info("Redis connected")
+	logger.GetLogger().Info("Redis connected")
 
 	instance = client
 }

@@ -3,7 +3,7 @@ package postgresql
 import (
 	"fmt"
 	"github.com/HlapovErop/MarkBot/src/internal/models"
-	"github.com/HlapovErop/MarkBot/src/internal/utils"
+	logger2 "github.com/HlapovErop/MarkBot/src/internal/utils/logger"
 	"go.uber.org/zap"
 	"gorm.io/gorm/logger"
 	"os"
@@ -35,12 +35,12 @@ func connectDB() {
 	})
 
 	if err != nil {
-		utils.GetLogger().Fatal("Failed to connect to database. \n", zap.Error(err))
+		logger2.GetLogger().Fatal("Failed to connect to database. \n", zap.Error(err))
 	}
 
-	utils.GetLogger().Info("DB connected")
+	logger2.GetLogger().Info("DB connected")
 
-	utils.GetLogger().Info("running migrations")
+	logger2.GetLogger().Info("running migrations")
 	db.AutoMigrate(&models.User{})
 
 	instance = db

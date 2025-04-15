@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"github.com/HlapovErop/MarkBot/src/internal/models"
-	"github.com/HlapovErop/MarkBot/src/internal/utils"
+	"github.com/HlapovErop/MarkBot/src/internal/utils/logger"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
@@ -15,7 +15,7 @@ import (
 // PS - никто, вообще никто не может запретить пользоваться несколькими видами авторизации одновременно ;)
 func AuthMiddleware(ctx *fiber.Ctx) error {
 	sessionID := ctx.Get("sessionID")
-	utils.GetLogger().Info(sessionID)
+	logger.GetLogger().Info(sessionID)
 	if sessionID == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"status":  "error1",

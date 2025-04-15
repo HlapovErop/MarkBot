@@ -3,7 +3,7 @@ package who_am_i
 import (
 	"github.com/HlapovErop/MarkBot/src/internal/models"
 	user_storage "github.com/HlapovErop/MarkBot/src/internal/storage/user"
-	"github.com/HlapovErop/MarkBot/src/internal/utils"
+	"github.com/HlapovErop/MarkBot/src/internal/utils/logger"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 )
@@ -14,14 +14,14 @@ func Handler(ctx *fiber.Ctx) error {
 	user := ctx.Locals("User").(*models.User)
 	user, err := user_storage.GetByID(user.GetID())
 	if err != nil {
-		utils.GetLogger().Error("Error logging in user: ", zap.Error(err))
+		logger.GetLogger().Error("Error logging in user: ", zap.Error(err))
 		return ctx.Status(401).JSON(fiber.Map{
 			"status":  "error",
 			"message": "User not found",
 		})
 	}
 
-	// Фактически просто берем и переносим поля юзера в новую структуру, а уже она попадет в вывод. Фактически таким образом ограничили вывод полей
+	// Фактически просто берем и переносим поля юзера в новую структуру, а уже она попадет в вывод. Таким образом ограничили вывод полей
 	safeUser := outUser{
 		ID:        user.ID,
 		Name:      user.Name,

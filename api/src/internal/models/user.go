@@ -20,6 +20,7 @@ type InterfaceUser interface {
 type User struct {
 	gorm.Model
 	Name     string        `json:"name" gorm:"type:varchar(255);not null;default:null"`
+	Surname  string        `json:"surname" gorm:"type:varchar(255);not null;default:null"`
 	Email    string        `json:"email" gorm:"type:varchar(255);not null;default:null"`
 	Password string        `json:"password" gorm:"type:varchar(255);not null;default:null"`
 	Points   int64         `json:"points" gorm:"type:int;not null;default:100"`

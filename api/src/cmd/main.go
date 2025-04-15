@@ -5,8 +5,12 @@ import (
 	"github.com/HlapovErop/MarkBot/src/consts"
 	"github.com/HlapovErop/MarkBot/src/database/postgresql"
 	"github.com/HlapovErop/MarkBot/src/database/redis"
-	"github.com/HlapovErop/MarkBot/src/internal/utils"
+	"github.com/HlapovErop/MarkBot/src/internal/models"
+	"github.com/HlapovErop/MarkBot/src/internal/utils/logger"
+	"github.com/HlapovErop/MarkBot/src/internal/utils/toggles"
 	"github.com/HlapovErop/MarkBot/src/internal/v1/handlers/login"
+	"github.com/HlapovErop/MarkBot/src/internal/v1/handlers/register"
+	"github.com/HlapovErop/MarkBot/src/internal/v1/handlers/switch_toggles"
 	"github.com/HlapovErop/MarkBot/src/internal/v1/handlers/who_am_i"
 	"github.com/HlapovErop/MarkBot/src/internal/v1/middlewares"
 	"github.com/gofiber/fiber/v2"
@@ -23,9 +27,13 @@ import (
 func main() {
 
 	// Это называется прогрев. Сейчас приложение только запускается, ему нужно установить все коннекты, в некоторых случаях подгрузить данные в редис, выполнить сиды и миграции. Если прогрева не будет, то все коннекты произойдут при первом запросе, который может изрядно подвиснуть
-	utils.GetLogger()
+	logger.GetLogger()
 	postgresql.GetDB()
 	redis.GetRedis()
+	err := toggles.GetTogglesStorage().Set("CanRegister", consts.INIT_CAN_REGISTER)
+	if err != nil {
+		logger.GetLogger().Fatal("Can't set toggle CanRegister", zap.Error(err))
+	}
 
 	app := fiber.New(
 	//fiber.Config{
@@ -51,17 +59,19 @@ func main() {
 
 	// А если не простой, то лучше выносить логику в отдельные места
 	v1.Post(login.ROUTE, login.Handler)
+	v1.Post(register.ROUTE, register.Handler)
 
-	// Вот так просто и ненавязчиво сказали, что плюс ко всему ты должен пройти мидлвару авторизации прежде чем получить доступ к хэндлеру
+	// Вот так просто и ненавязчиво сказали, что плюс ко всему ты должен пройти мидлвару авторизации и другие прежде чем получить доступ к хэндлеру
 	v1.Post(who_am_i.ROUTE, middlewares.AuthMiddleware, who_am_i.Handler)
+	v1.Post(switch_toggles.ROUTE, middlewares.AuthMiddleware, middlewares.GetByRole(models.RoleTeacher), switch_toggles.Handler)
 
 	apiHost := os.Getenv("API_HOST")
 	if apiHost == "" {
 		apiHost = consts.DEFAULT_HOST
 	}
-	utils.GetLogger().Info(fmt.Sprintf("Server started: http://%s", apiHost))
+	logger.GetLogger().Info(fmt.Sprintf("Server started: http://%s", apiHost))
 
 	if err := app.Listen(apiHost); err != nil {
-		utils.GetLogger().Fatal("Error in fiber app.Listen: ", zap.Error(err))
+		logger.GetLogger().Fatal("Error in fiber app.Listen: ", zap.Error(err))
 	}
 }
