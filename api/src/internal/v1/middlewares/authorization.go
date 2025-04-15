@@ -18,7 +18,7 @@ func AuthMiddleware(ctx *fiber.Ctx) error {
 	logger.GetLogger().Info(sessionID)
 	if sessionID == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"status":  "error1",
+			"status":  "error",
 			"message": "Unauthorized",
 		})
 	}
@@ -26,7 +26,7 @@ func AuthMiddleware(ctx *fiber.Ctx) error {
 	session, err := models.GetSession(ctx.Context(), sessionID)
 	if err != nil {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"status":  err.Error(),
+			"status":  "error",
 			"message": "Unauthorized",
 		})
 	}
@@ -34,7 +34,7 @@ func AuthMiddleware(ctx *fiber.Ctx) error {
 	// Здесь выполняем проверки метаданных. Это отличительная черта сессий - они имеют привязку к месту, откуда произошел логин. Влияет даже браузер. Можно придумать и больше метаданных, но в данном примере нет необходимости
 	if session == nil || session.IP != ctx.IP() || session.UserAgent != ctx.Get("User-Agent") {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"status":  "error3",
+			"status":  "error",
 			"message": "Unauthorized",
 		})
 	}

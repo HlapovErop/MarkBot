@@ -8,10 +8,6 @@ import (
 
 const ROUTE = "/switch_toggles"
 
-type Body struct {
-	Toggles map[string]interface{} `json:"toggles" binding:"required"`
-}
-
 func Handler(ctx *fiber.Ctx) error {
 	body := new(Body)
 	if err := ctx.BodyParser(body); err != nil {

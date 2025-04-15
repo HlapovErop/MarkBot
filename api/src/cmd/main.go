@@ -8,6 +8,7 @@ import (
 	"github.com/HlapovErop/MarkBot/src/internal/models"
 	"github.com/HlapovErop/MarkBot/src/internal/utils/logger"
 	"github.com/HlapovErop/MarkBot/src/internal/utils/toggles"
+	"github.com/HlapovErop/MarkBot/src/internal/v1/handlers/donate"
 	"github.com/HlapovErop/MarkBot/src/internal/v1/handlers/login"
 	"github.com/HlapovErop/MarkBot/src/internal/v1/handlers/register"
 	"github.com/HlapovErop/MarkBot/src/internal/v1/handlers/switch_toggles"
@@ -62,8 +63,9 @@ func main() {
 	v1.Post(register.ROUTE, register.Handler)
 
 	// Вот так просто и ненавязчиво сказали, что плюс ко всему ты должен пройти мидлвару авторизации и другие прежде чем получить доступ к хэндлеру
-	v1.Post(who_am_i.ROUTE, middlewares.AuthMiddleware, who_am_i.Handler)
+	v1.Get(who_am_i.ROUTE, middlewares.AuthMiddleware, who_am_i.Handler)
 	v1.Post(switch_toggles.ROUTE, middlewares.AuthMiddleware, middlewares.GetByRole(models.RoleTeacher), switch_toggles.Handler)
+	v1.Post(donate.ROUTE, middlewares.AuthMiddleware, middlewares.GetByRole(models.RoleStudent), donate.Handler)
 
 	apiHost := os.Getenv("API_HOST")
 	if apiHost == "" {

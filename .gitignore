@@ -27,4 +27,6 @@ go.work.sum
 **.idea
 api/tmp/*
 
+api/src/database/toggles.json
+
 *.sum

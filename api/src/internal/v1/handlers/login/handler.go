@@ -10,11 +10,6 @@ import (
 
 const ROUTE = "/login"
 
-type Body struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-
 func Handler(ctx *fiber.Ctx) error {
 	body := new(Body)
 	if err := ctx.BodyParser(body); err != nil {

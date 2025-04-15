@@ -51,3 +51,73 @@ func GetByID(id uint) (*models.User, error) {
 
 	return &user, nil
 }
+
+func DonatePoints(senderID, receiverID uint, points int64) error {
+	if senderID == receiverID {
+		return errors.New("cannot donate points to yourself")
+	}
+	if points <= 0 {
+		return errors.New("points amount must be positive")
+	}
+
+	db := postgresql.GetDB()
+
+	// Да начнется транзакция
+	tx := db.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	var senderPoints int64
+	var receiverExists bool
+
+	// Запрос 1: Проверяем обоих пользователей и блокируем отправителя, чтобы не возникло гонки ресурсов(race condition)
+	row := tx.Raw(`
+        SELECT 
+            (SELECT points FROM users WHERE id = ? FOR UPDATE) as sender_points,
+            EXISTS(SELECT 1 FROM users WHERE id = ?) as receiver_exists
+    `, senderID, receiverID).Row()
+
+	if err := row.Scan(&senderPoints, &receiverExists); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to check users: %w", err)
+	}
+
+	if !receiverExists {
+		tx.Rollback()
+		return errors.New("receiver not found")
+	}
+	if senderPoints < points {
+		tx.Rollback()
+		return fmt.Errorf("not enough points (available: %d, requested: %d)", senderPoints, points)
+	}
+
+	// Запрос 2: Списание у отправителя
+	if err := tx.Exec(`
+        UPDATE users SET points = points - ? 
+        WHERE id = ?
+    `, points, senderID).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to deduct points: %w", err)
+	}
+
+	// Запрос 3: Начисление получателю
+	if err := tx.Exec(`
+        UPDATE users SET points = points + ? 
+        WHERE id = ?
+    `, points, receiverID).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to add points: %w", err)
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return fmt.Errorf("commit failed: %w", err)
+	}
+
+	return nil
+}

@@ -1,10 +1,13 @@
 NAME=MARKBOT
+DOCKER=docker compose
 
 clean:
-	rm -rf api/tmp/
+	rm -rf api/tmp/ && rm api/src/database/toggles.json
 
 api-console:
-	docker compose run --service-ports api-markbot bash
+	$(DOCKER) run --service-ports api-markbot bash
+remove-containers:
+	$(DOCKER) down --remove-orphans
 
 greeting:
 	@echo "🎓🎓🎓"
