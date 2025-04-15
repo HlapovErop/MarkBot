@@ -1,5 +1,5 @@
 package consts
 
 const (
-	DEFAULT_HOST = "http://localhost:3000"
+	DEFAULT_HOST = "0.0.0.0:3000"
 )

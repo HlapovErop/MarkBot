@@ -2,10 +2,12 @@ package user
 
 import (
 	"errors"
+	"fmt"
 	"github.com/HlapovErop/MarkBot/src/database/postgresql"
 	"github.com/HlapovErop/MarkBot/src/internal/models"
 	"github.com/HlapovErop/MarkBot/src/internal/utils"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 func Login(u *models.User) error {
@@ -22,4 +24,30 @@ func Login(u *models.User) error {
 	}
 
 	return nil
+}
+
+func GetByID(id uint) (*models.User, error) {
+	if id == 0 {
+		err := errors.New("user ID cannot be zero")
+
+		utils.GetLogger().Error("invalid user ID", zap.Error(err))
+		return nil, fmt.Errorf("invalid user ID: %w", err)
+	}
+
+	var user models.User
+
+	err := postgresql.GetDB().First(&user, id).Error
+	if err != nil {
+		// Тут обработка ошибки, если просто нет такого юзера
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			utils.GetLogger().Warn("user not found", zap.Uint("id", id))
+			return nil, fmt.Errorf("user with ID %d not found: %w", id, err)
+		}
+
+		// А тут все остальные ошибки
+		utils.GetLogger().Error("database error", zap.Uint("user_id", id), zap.Error(err))
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	return &user, nil
 }

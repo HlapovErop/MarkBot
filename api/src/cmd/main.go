@@ -7,8 +7,10 @@ import (
 	"github.com/HlapovErop/MarkBot/src/database/redis"
 	"github.com/HlapovErop/MarkBot/src/internal/utils"
 	"github.com/HlapovErop/MarkBot/src/internal/v1/handlers/login"
+	"github.com/HlapovErop/MarkBot/src/internal/v1/handlers/who_am_i"
 	"github.com/HlapovErop/MarkBot/src/internal/v1/middlewares"
 	"github.com/gofiber/fiber/v2"
+	"go.uber.org/zap"
 	"os"
 )
 
@@ -25,14 +27,16 @@ func main() {
 	postgresql.GetDB()
 	redis.GetRedis()
 
-	app := fiber.New(fiber.Config{
-		Prefork: true, // используем предварительное форкование для увеличения производительности
-	})
+	app := fiber.New(
+	//fiber.Config{
+	//	Prefork: true, // Хорошая вещь для увеличения производительности на проде, но только не при air и других лайф-релодах! Если air потеряет контроль над дочерними процессами, то у тебя утечет память, останутся зомби-процессы, а трафик может улететь в старую версию
+	//},
+	)
 
 	// Подключаем мидлвару для логирования
 	app.Use(middlewares.LoggingMiddleware)
 
-	// Мидлвара для установки /v1 в маршруте, и заодно добавляет в контекст, что версия 1. Глубже в бизнес-логике это может пригодиться
+	// Мидлвара для установки /v1 в маршруте, и заодно добавляет в контекст, что версия 1. Глубже в бизнес-логике это может пригодиться, например в общих сторэджах или утилитах, где версия немного влияет на работу и бизнес-логику
 	v1 := app.Group("/v1", func(ctx *fiber.Ctx) error {
 		ctx.Locals("Version", "v1")
 		return ctx.Next()
@@ -48,10 +52,16 @@ func main() {
 	// А если не простой, то лучше выносить логику в отдельные места
 	v1.Post(login.ROUTE, login.Handler)
 
+	// Вот так просто и ненавязчиво сказали, что плюс ко всему ты должен пройти мидлвару авторизации прежде чем получить доступ к хэндлеру
+	v1.Post(who_am_i.ROUTE, middlewares.AuthMiddleware, who_am_i.Handler)
+
 	apiHost := os.Getenv("API_HOST")
 	if apiHost == "" {
 		apiHost = consts.DEFAULT_HOST
 	}
-	utils.GetLogger().Info(fmt.Sprintf("Server started: %s", apiHost))
-	app.Listen(apiHost)
+	utils.GetLogger().Info(fmt.Sprintf("Server started: http://%s", apiHost))
+
+	if err := app.Listen(apiHost); err != nil {
+		utils.GetLogger().Fatal("Error in fiber app.Listen: ", zap.Error(err))
+	}
 }
