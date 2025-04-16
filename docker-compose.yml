@@ -36,10 +36,11 @@ services:
     restart: unless-stopped
 
   # Development service with hot-reloading
-  api-markbot:
+  api-markbot-dev:
     build:
-      context: ./api # здесь мы говорим, где берем рецепт для нашего web контейнера. Но некоторые крутые пишут параметры context:... и dockerfile:..., если место и имя файла отличается
-    container_name: markbot-api
+      context: ./api
+      target: development # Целевая стадия из Dockerfile - разработка с hot-reloading
+    container_name: markbot-api-dev
     env_file:
       - .env
     environment:
@@ -50,19 +51,48 @@ services:
       - REDIS_HOST=${REDIS_HOST:-redis}
     ports:
       - "3000:3000"
-    volumes: # называется томами, нужны для синхронизации данных контейнера и хоста(нашего компьютера). Вообще используются овер где и как, они очень полезны, вот один яркий пример: внутри контейнера будут писаться логи, но без указания тома они там и останутся. Чтобы их увидеть, тебе придется зайти внутрь контейнера и посмотреть там - изменения не будут отображаться в IDE и файле логов вне контейнера, а с его удалением и вовсе пропадут. Том показывает, куда нужно сохранять изменения, которые принес в файлы, на наш хост. И куда смотреть, чтобы синхронизировать изменения на хосте со своими. К примеру если внесешь изменения в файл, контейнер их сразу увидит и скопирует к себе. Простыми словами - синхронизация
-      - ./api:/usr/src/api # в данном случае используется анонимный том, т.е. без имени. Первым параметром перед ":" указывается папка хоста, вторым - папка контейнера. В данном случае - все файлы из папки api/ будут копироваться в папку /usr/src/api в контейнере
-      - api-go-mod-cache:/go/pkg/mod  # тут уже используется именованный том. api-go-mod-cache - это имя тома, а /go/pkg/mod - путь внутри контейнера
-    command: air -c .air.toml # без air она бы выглядела так: go run cmd/main.go -b 0.0.0.0 (также команду можно указать прямо в Dockerfile через CMD ...)
-    depends_on: # указываем, что контейнер api-markbot зависит от других. Т.е. при запуске контейнера api-markbot он будет ждать пока db и redis будут запущены
+    volumes: # называется томами, нужны для синхронизации данных контейнера и хоста(нашего компьютера).
+      - ./api:/usr/src/api # синхронизация файлов проекта для hot-reloading
+      - api-go-mod-cache:/go/pkg/mod  # кэш зависимостей Go
+    depends_on: # указываем, что контейнер api-markbot зависит от других.
       db:
-        condition: service_healthy # condition: service_healthy гарантирует, что зависимый сервис запускается только после того, как целевой сервис был помечен как здоровый.
+        condition: service_healthy
       redis:
-        condition: service_healthy # может быть также service_started, но он стоит по умолчанию
-    restart: unless-stopped # если контейнер упадет, те перезапустится
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - dev
+      - all
 
+  # Production service with compiled binary
+  api-markbot-prod:
+    build:
+      context: ./api
+      target: production # Целевая стадия из Dockerfile - production с скомпилированным бинарником
+    container_name: markbot-api-prod
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=${DB_HOST:-db}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./log:/usr/src/api/log # только логи из продакшена
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - prod
+      - all
 
-volumes: # А вот тут регистрируем наш именной том. Он тоже хранится, но где - за это отвечает сам докер, например в /var/lib/docker/volumes. Именованные тома можно синхронизировать сразу между несколькими проектами и контейнерами, если хост один и тот же. Напрмер при подключении другого проекта можете указать postgres-db-markbot, и он будет видеть бд этого проекта
+volumes: # регистрируем именованные тома
   postgres-db-markbot:
     name: markbot-postgres-data
   redis-db-markbot:

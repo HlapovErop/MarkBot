@@ -1,14 +1,51 @@
 NAME=MARKBOT
-DOCKER=docker compose
+DOCKER=docker-compose
 
+# Очистка временных файлов
 clean:
-	rm -rf api/tmp/ && rm api/src/database/toggles.json
+	rm -rf api/tmp/ && rm -f api/src/database/toggles.json
 
-api-console:
-	$(DOCKER) run --service-ports api-markbot bash
+# Доступ к консоли в dev-контейнере
+api-console-dev:
+	$(DOCKER) --profile dev run --service-ports api-markbot-dev bash
+
+# Доступ к консоли в prod-контейнере
+api-console-prod:
+	$(DOCKER) --profile prod run --service-ports api-markbot-prod bash
+
+# Удаление всех контейнеров
 remove-containers:
 	$(DOCKER) down --remove-orphans
 
+# Запуск в режиме разработки с hot-reloading (air)
+dev:
+	$(DOCKER) --profile dev up
+
+# Запуск в режиме разработки с отсоединением (detached mode)
+dev-detached:
+	$(DOCKER) --profile dev up -d
+
+# Сборка для режима разработки
+build-dev:
+	$(DOCKER) --profile dev build
+
+# Запуск в production режиме
+prod:
+	$(DOCKER) --profile prod up
+
+# Запуск в production режиме с отсоединением (detached mode)
+prod-detached:
+	$(DOCKER) --profile prod up -d
+
+# Сборка для production режима
+build-prod:
+	$(DOCKER) --profile prod build
+
+# Запуск всех сервисов (dev и prod)
+all:
+	$(DOCKER) --profile all up
+
+# Приветственное сообщение
 greeting:
 	@echo "🎓🎓🎓"
 	@echo
