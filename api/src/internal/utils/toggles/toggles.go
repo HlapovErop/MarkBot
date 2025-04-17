@@ -95,6 +95,29 @@ func (s *fileStorage) GetAll() map[string]interface{} {
 	return copy
 }
 
+func (s *fileStorage) GetStringSlice(key string) ([]string, bool) {
+	val, exists := s.Get(key)
+	if !exists {
+		return nil, false
+	}
+
+	if slice, ok := val.([]string); ok {
+		return slice, true
+	}
+
+	if slice, ok := val.([]interface{}); ok {
+		result := make([]string, 0, len(slice))
+		for _, item := range slice {
+			if s, ok := item.(string); ok {
+				result = append(result, s)
+			}
+		}
+		return result, true
+	}
+
+	return nil, false
+}
+
 // load загружает данные из файла
 func (s *fileStorage) load() error {
 	file, err := os.ReadFile(s.filePath)

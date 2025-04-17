@@ -7,7 +7,9 @@ import (
 	"github.com/HlapovErop/MarkBot/src/internal/models"
 	"github.com/HlapovErop/MarkBot/src/internal/utils/logger"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+	"regexp"
 )
 
 func Login(u *models.User) error {
@@ -17,10 +19,15 @@ func Login(u *models.User) error {
 		return err
 	}
 
-	err := postgresql.GetDB().Where("email = ? AND password = ?", u.Email, u.Password).First(u).Error
+	password := u.Password
+	err := postgresql.GetDB().Where("email = ?", u.Email).First(u).Error
 	if err != nil {
 		logger.GetLogger().Error("Login error", zap.Error(err))
 		return err
+	}
+	if !u.CheckPassword(password) {
+		logger.GetLogger().Error("Login error", zap.Error(err))
+		return errors.New("password not valid")
 	}
 
 	return nil
@@ -120,4 +127,51 @@ func DonatePoints(senderID, receiverID uint, points int64) error {
 	}
 
 	return nil
+}
+
+func Create(u *models.User) (uint, error) {
+	if !isValidEmail(u.Email) {
+		return 0, errors.New("email format is invalid")
+	}
+
+	if len(u.Password) < 8 {
+		return 0, errors.New("password must be at least 8 characters")
+	}
+
+	if !u.ValidateNameSurname() {
+		return 0, errors.New("name and surname combination is not allowed")
+	}
+
+	if exists, err := checkEmailExists(u.Email); err != nil {
+		return 0, err
+	} else if exists {
+		return 0, errors.New("email already registered")
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return 0, err
+	}
+	u.Password = string(hashedPassword)
+
+	result := postgresql.GetDB().Create(u)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+
+	return u.ID, nil
+}
+
+// Вспомогательные методы
+
+func isValidEmail(email string) bool {
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	return emailRegex.MatchString(email)
+}
+
+func checkEmailExists(email string) (bool, error) {
+	var count int64
+	db := postgresql.GetDB()
+	err := db.Model(&models.User{}).Where("email = ?", email).Count(&count).Error
+	return count > 0, err
 }

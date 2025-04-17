@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/HlapovErop/MarkBot/src/internal/models"
 	logger2 "github.com/HlapovErop/MarkBot/src/internal/utils/logger"
+	"github.com/HlapovErop/MarkBot/src/internal/utils/toggles"
 	"go.uber.org/zap"
 	"gorm.io/gorm/logger"
 	"os"
@@ -44,4 +45,11 @@ func connectDB() {
 	db.AutoMigrate(&models.User{})
 
 	instance = db
+
+	seedsInstalled, _ := toggles.GetTogglesStorage().Get("SeedsInstalled")
+	if !seedsInstalled.(bool) {
+		logger2.GetLogger().Info("running seeds")
+		seeds()
+		toggles.GetTogglesStorage().Set("seedsInstalled", true)
+	}
 }

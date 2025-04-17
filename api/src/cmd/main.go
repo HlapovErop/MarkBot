@@ -29,12 +29,12 @@ func main() {
 
 	// Это называется прогрев. Сейчас приложение только запускается, ему нужно установить все коннекты, в некоторых случаях подгрузить данные в редис, выполнить сиды и миграции. Если прогрева не будет, то все коннекты произойдут при первом запросе, который может изрядно подвиснуть
 	logger.GetLogger()
-	postgresql.GetDB()
-	redis.GetRedis()
 	err := toggles.GetTogglesStorage().Set("CanRegister", consts.INIT_CAN_REGISTER)
 	if err != nil {
 		logger.GetLogger().Fatal("Can't set toggle CanRegister", zap.Error(err))
 	}
+	postgresql.GetDB()
+	redis.GetRedis()
 
 	app := fiber.New(
 	//fiber.Config{

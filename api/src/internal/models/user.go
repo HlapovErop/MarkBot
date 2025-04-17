@@ -1,7 +1,9 @@
 package models
 
 import (
+	"github.com/HlapovErop/MarkBot/src/internal/utils/toggles"
 	"github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"slices"
 )
@@ -19,10 +21,10 @@ type InterfaceUser interface {
 
 type User struct {
 	gorm.Model
-	Name     string        `json:"name" gorm:"type:varchar(255);not null;default:null"`
-	Surname  string        `json:"surname" gorm:"type:varchar(255);not null;default:null"`
-	Email    string        `json:"email" gorm:"type:varchar(255);not null;default:null"`
-	Password string        `json:"password" gorm:"type:varchar(255);not null;default:null"`
+	Name     string        `json:"name" gorm:"type:varchar(255);not null;default:null;index:idx_name_surname,unique"`
+	Surname  string        `json:"surname" gorm:"type:varchar(255);not null;default:null;index:idx_name_surname,unique"`
+	Email    string        `json:"email" gorm:"type:varchar(255);not null;default:null;unique_index"`
+	Password string        `json:"-" gorm:"type:varchar(255);not null;default:null"`
 	Points   int64         `json:"points" gorm:"type:int;not null;default:100"`
 	Roles    pq.Int64Array `json:"roles" gorm:"type:integer[];not null;"`
 }
@@ -41,4 +43,19 @@ func IsTeacher(user InterfaceUser) bool {
 
 func IsStudent(user InterfaceUser) bool {
 	return slices.Contains(user.GetRoles(), RoleStudent)
+}
+
+func (u *User) ValidateNameSurname() bool {
+	allowedNames, ok := toggles.GetTogglesStorage().GetStringSlice("AllowedNames")
+	if !ok {
+		return true
+	}
+
+	fullName := u.Name + " " + u.Surname
+	return slices.Contains(allowedNames, fullName)
+}
+
+func (u *User) CheckPassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+	return err == nil
 }

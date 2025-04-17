@@ -2,8 +2,8 @@ package register
 
 import (
 	"github.com/HlapovErop/MarkBot/src/consts"
-	"github.com/HlapovErop/MarkBot/src/database/postgresql"
 	"github.com/HlapovErop/MarkBot/src/internal/models"
+	user_storage "github.com/HlapovErop/MarkBot/src/internal/storage/user"
 	"github.com/HlapovErop/MarkBot/src/internal/utils/logger"
 	"github.com/HlapovErop/MarkBot/src/internal/utils/toggles"
 	"github.com/gofiber/fiber/v2"
@@ -38,9 +38,9 @@ func Handler(ctx *fiber.Ctx) error {
 		Points:   consts.POINTS_AFTER_REGISTRATION,
 		Roles:    []int64{models.RoleStudent}, // регаться могут только студенты, учителя из сидов или бд (иногда делают для этого отдельную админку, но в данном проекте, где увеличения кол-ва учителей вообще не предполагается (им буду только я), в ней нет необходимости
 	}
-	result := postgresql.GetDB().Create(u)
-	if result.Error != nil {
-		logger.GetLogger().Error("Error register in user: ", zap.Error(result.Error))
+	id, err := user_storage.Create(u)
+	if err != nil {
+		logger.GetLogger().Error("Error register in user: ", zap.Error(err))
 		return ctx.Status(500).JSON(fiber.Map{
 			"status":  "error",
 			"message": "User not registered",
@@ -50,6 +50,6 @@ func Handler(ctx *fiber.Ctx) error {
 	return ctx.JSON(fiber.Map{
 		"status":  "success",
 		"message": "User registered",
-		"id":      u.ID,
+		"id":      id,
 	})
 }

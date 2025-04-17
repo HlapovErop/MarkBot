@@ -25,7 +25,6 @@ func Handler(ctx *fiber.Ctx) error {
 
 	return ctx.JSON(fiber.Map{
 		"status":  "success",
-		"message": "User registered",
-		"id":      "1",
+		"message": "toggle changed",
 	})
 }

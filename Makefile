@@ -3,7 +3,7 @@ DOCKER=docker-compose
 
 # Очистка временных файлов
 clean:
-	rm -rf api/tmp/ && rm -f api/src/database/toggles.json
+	rm -rf api/tmp/
 
 # Доступ к консоли в dev-контейнере
 api-console-dev:
