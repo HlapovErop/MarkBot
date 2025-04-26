@@ -21,7 +21,6 @@ func GetRedis() *redis.Client {
 func connectRedis() {
 	client := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:6379", os.Getenv("REDIS_HOST")),
-		Username: os.Getenv("REDIS_USER"),
 		Password: os.Getenv("REDIS_PASSWORD"),
 	})
 

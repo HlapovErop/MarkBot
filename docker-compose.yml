@@ -29,17 +29,10 @@ services:
     volumes:
       - redis-db-markbot:/data
     environment:
-      REDIS_USER: ${REDIS_USER:-default}
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-your_secure_password}  # Пароль из .env или дефолтный
-    command:
-      - sh
-      - -c
-      - |
-        redis-server
-        --requirepass $${REDIS_PASSWORD}
-        --user $${REDIS_USER} on >$${REDIS_PASSWORD} ~* +@all
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-your_secure_password}
+    command: redis-server --requirepass "${REDIS_PASSWORD}"
     healthcheck:
-      test: ["CMD", "redis-cli", "-u", "redis://$${REDIS_USER}:$${REDIS_PASSWORD}@localhost:6379", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
